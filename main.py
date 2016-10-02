@@ -3,6 +3,8 @@ import tornado.ioloop
 import tornado.web
 import os
 import numpy as np
+import redis
+
 # import matplotlib.pyplot as plt
 
 def raw_acc_to_acc(raw_acc):
@@ -85,16 +87,35 @@ def project_pos(pos):
     # plt.show()
     return new_points
 
-class MainHandler(tornado.web.RequestHandler):
+class BlahCreateHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write('<html><body><form action="/accelerations" method="POST">'
-                   '<input type="text" name="accelerations">'
+        self.write('<html><body><form action="/blah_new" method="POST">'
+                   '<input type="text" name="key">'
+                   '<input type="text" name="data">'
                    '<input type="submit" value="Submit">'
                    '</form></body></html>')
 
     def post(self):
+        r = redis.StrictRedis()
+        k, v = self.get_body_argument("key"), self.get_body_argument("data")
+        r.set(k, v)
+        self.write("I just stored " + v + ". Go to /blah_all to see all of them.")
+
+class BlahViewHandler(tornado.web.RequestHandler):
+    def get(self):
+        r = redis.StrictRedis()
+        for k in r.keys():
+            self.write(k + " " + r.get(k) + "\n")
+
+class MainHandler(tornado.web.RequestHandler):
+#     def get(self):
+#         self.write('<html><body><form action="/accelerations" method="POST">'
+#                    '<input type="text" name="accelerations">'
+#                    '<input type="submit" value="Submit">'
+#                    '</form></body></html>')
+
+    def post(self):
         self.set_header("Content-Type", "text/plain")
-        # raw_acc = self.get_body_argument("accelerations")
         raw_acc = self.request.body
         acc = raw_acc_to_acc(raw_acc)
         pos1 = acc_to_pos(acc, 1) # time!!?!?!?!?
@@ -109,7 +130,8 @@ class ViewHandler(tornado.web.RequestHandler):
 def make_app():
     return tornado.web.Application([
         (r"/accelerations", MainHandler),
-        (r"/myform", MainHandler),
+        (r"/blah_new", BlahCreateHandler),
+        (r"/blah_all", BlahViewHandler),
         (r"/view", ViewHandler)
     ])
 
