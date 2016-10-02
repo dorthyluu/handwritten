@@ -95,7 +95,8 @@ class MainHandler(tornado.web.RequestHandler):
 
     def post(self):
         self.set_header("Content-Type", "text/plain")
-        raw_acc = self.get_body_argument("accelerations")
+        # raw_acc = self.get_body_argument("accelerations")
+        raw_acc = self.request.body
         acc = raw_acc_to_acc(raw_acc)
         pos1 = acc_to_pos(acc, 1) # time!!?!?!?!?
         pos2 = project_pos(pos1)
