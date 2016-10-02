@@ -2,7 +2,7 @@ import tornado.ioloop
 import tornado.web
 import os
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 def acc_to_pos(acc, t):
     # t is time interval in what units ???
@@ -75,9 +75,9 @@ def project_pos(pos):
         point -= anchor
         bv1_c = np.inner(point, bv1)
         bv2_c = np.inner(point, bv2)
-        plt.scatter(bv1_c, bv2_c)
+        # plt.scatter(bv1_c, bv2_c)
         new_points.append([bv1_c, bv2_c])
-    plt.show()
+    # plt.show()
     return np.array(new_points)
 
 class MainHandler(tornado.web.RequestHandler):
