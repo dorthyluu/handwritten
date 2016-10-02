@@ -23,7 +23,8 @@ def acc_to_pos(acc, t):
         vel_so_far[0] += a[0]
         vel_so_far[1] += a[1]
         vel_so_far[2] += a[2]
-        pos_so_far = tuple(pos_so_far[i] + vel_so_far[i] for i in range(3))
+        
+        pos_so_far = tuple(pos_so_far[i] + vel_so_far[i] + a[i]/2for i in range(3))
         pos.append(pos_so_far)
 
     return pos
@@ -87,7 +88,7 @@ def project_pos(pos):
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write('<html><body><form action="/myform" method="POST">'
+        self.write('<html><body><form action="/accelerations" method="POST">'
                    '<input type="text" name="accelerations">'
                    '<input type="submit" value="Submit">'
                    '</form></body></html>')
@@ -98,7 +99,7 @@ class MainHandler(tornado.web.RequestHandler):
         acc = raw_acc_to_acc(raw_acc)
         pos1 = acc_to_pos(acc, 1) # time!!?!?!?!?
         pos2 = project_pos(pos1)
-        self.write("Before adjusting: " + str(pos1) + "After adjusting: " + str(pos2))
+        self.write("Before adjusting: " + str(pos1) + "\nAfter adjusting: " + str(pos2))
         # visualize positions
 
 class ViewHandler(tornado.web.RequestHandler):
@@ -107,7 +108,7 @@ class ViewHandler(tornado.web.RequestHandler):
 
 def make_app():
     return tornado.web.Application([
-        (r"/", MainHandler),
+        (r"/accelerations", MainHandler),
         (r"/myform", MainHandler),
         (r"/view", ViewHandler)
     ])
