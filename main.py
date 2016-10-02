@@ -4,30 +4,32 @@ import tornado.web
 import os
 import numpy as np
 import redis
+import time
 
 # import matplotlib.pyplot as plt
 
-def raw_acc_to_acc(raw_acc):
+def raw_acc_to_acc(raw_acc, bias):
     acc = np.frombuffer(raw_acc, np.uint16)
     return acc.reshape((len(acc)//3, 3))
 
-def acc_to_pos(acc, t):
+def acc_to_pos(acc, v0, p0, bias):
     # t is time interval in what units ???
     # acc is a list of 3-vectors in distance / unit time,
     # each vector is an acceleration sample after t seconds
+    # can probably optimize
 
     # compute velocity using Riemann sums:
     pos = []
-    vel_so_far = [0.0, 0.0, 0.0]
-    pos_so_far = (0.0, 0.0, 0.0)
+    acc = map(lambda a: tuple(a[i] - bias[i] for i in range(3)), acc)
     for a in acc:
-        vel_so_far[0] += a[0]
-        vel_so_far[1] += a[1]
-        vel_so_far[2] += a[2]
-        
-        pos_so_far = tuple(pos_so_far[i] + vel_so_far[i] + a[i]/2for i in range(3))
-        pos.append(pos_so_far)
-
+        v0[0] += a[0]
+        v0[1] += a[1]
+        v0[2] += a[2]
+        p0[0] += a[0]//2 + v0[0] + p0[0]
+        p0[1] += a[1]//2 + v0[1] + p0[1]
+        p0[2] += a[2]//2 + v0[2] + p0[2]
+        pos.append(p0)
+    
     return pos
 
 def f(coeffs, inp):
@@ -90,7 +92,6 @@ def project_pos(pos):
 class BlahCreateHandler(tornado.web.RequestHandler):
     def get(self):
         self.write('<html><body><form action="/blah_new" method="POST">'
-                   '<input type="text" name="key">'
                    '<input type="text" name="data">'
                    '<input type="submit" value="Submit">'
                    '</form></body></html>')
@@ -98,7 +99,7 @@ class BlahCreateHandler(tornado.web.RequestHandler):
     def post(self):
         redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
         r = redis.from_url(redis_url)
-        k, v = self.get_body_argument("key"), self.get_body_argument("data")
+        k, v = time.time(), self.get_body_argument("data")
         r.set(k, v)
         self.write("I just stored " + v + ". Go to /blah_all to see all of them.")
 
@@ -117,17 +118,55 @@ class MainHandler(tornado.web.RequestHandler):
 #                    '</form></body></html>')
 
     def post(self):
-        self.set_header("Content-Type", "text/plain")
+        redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
+        r = redis.from_url(redis_url)
+        packet_id = self.request.headers['PacketID']
         raw_acc = self.request.body
-        acc = raw_acc_to_acc(raw_acc)
-        pos1 = acc_to_pos(acc, 1) # time!!?!?!?!?
-        pos2 = project_pos(pos1)
-        self.write("Before adjusting: " + str(pos1) + "\nAfter adjusting: " + str(pos2))
+        #acc = raw_acc_to_acc(raw_acc)
+        #pos1 = acc_to_pos(acc) # time!!?!?!?!?
+        #pos2 = project_pos(pos1)
+        if packet_id == 0:
+            curr_key = time.time()
+            r.set("curr_key", curr_key)
+            r.set("curr_id", packet_id)
+            r.hmset(curr_key, {packet_id: raw_acc})
+        else:
+            curr_key = r.get("curr_key")
+            points = r.get(curr_key)
+            if packet_id == -1:
+                points[r.get("curr_id") + 1] = raw_acc
+            else:
+                r.set("curr_id", packet_id)
+                points[packet_id] = raw_acc
+            r.set(curr_key, points)
+
+        # self.set_header("Content-Type", "text/plain")
+        # self.write("Before adjusting: " + str(pos1) + "\nAfter adjusting: " + str(pos2))
         # visualize positions
 
 class ViewHandler(tornado.web.RequestHandler):
     def get(self):
-        items = ["item1", "item2???", "item3"]
+        ret = []
+        redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
+        r = redis.from_url(redis_url)
+        for t in sorted(r.keys()):
+            if type(t) != float:
+                continue
+            ret.append([])
+            points = r.get(t) # this stores raw accelerations
+            v0, p0 = [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
+            bias = None
+            for k in points:
+                acc = raw_acc_to_acc(points[k])
+                if k == 0:
+                    bias = acc[0]
+                # this function mutates v0 and p0
+                pos = acc_to_pos(acc, v0, p0, bias)
+                ret[-1].extend(pos)
+        ret = {"data": ret}
+        self.set_header("Content-Type", "application/json")
+        self.write(ret)
+
 
 def make_app():
     return tornado.web.Application([
