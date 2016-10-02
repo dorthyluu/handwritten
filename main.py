@@ -96,14 +96,16 @@ class BlahCreateHandler(tornado.web.RequestHandler):
                    '</form></body></html>')
 
     def post(self):
-        r = redis.StrictRedis()
+        redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
+        r = redis.from_url(redis_url)
         k, v = self.get_body_argument("key"), self.get_body_argument("data")
         r.set(k, v)
         self.write("I just stored " + v + ". Go to /blah_all to see all of them.")
 
 class BlahViewHandler(tornado.web.RequestHandler):
     def get(self):
-        r = redis.StrictRedis()
+        redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
+        r = redis.from_url(redis_url)
         for k in r.keys():
             self.write(k + " " + r.get(k) + "\n")
 
