@@ -96,7 +96,7 @@ class MainHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "text/plain")
         raw_acc = self.get_body_argument("accelerations")
         acc = raw_acc_to_acc(raw_acc)
-        pos = acc_to_pos(acc)
+        pos = acc_to_pos(acc, 1) # time!!?!?!?!?
         self.write("Positions are " + str(pos))
         # visualize positions
 
