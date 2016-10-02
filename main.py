@@ -137,6 +137,7 @@ class MainHandler(tornado.web.RequestHandler):
                 points[r.get("curr_id") + 1] = raw_acc
             else:
                 r.set("curr_id", packet_id)
+                print(points)
                 points[packet_id] = raw_acc
             r.set(curr_key, points)
 
