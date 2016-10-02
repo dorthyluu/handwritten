@@ -6,8 +6,8 @@ import numpy as np
 # import matplotlib.pyplot as plt
 
 def raw_acc_to_acc(raw_acc):
-    acc = map(lambda s: int(s), raw_acc.split(","))
-    acc = np.array(acc).reshape((len(acc)/3, 3))
+    acc = map(lambda s: int(s, 16) if s else 0, raw_acc.split("\\x"))
+    acc = np.array(acc[1:]).reshape((len(acc)/3, 3))
     return acc
 
 def acc_to_pos(acc, t):
