@@ -127,7 +127,7 @@ class MainHandler(tornado.web.RequestHandler):
         #pos2 = project_pos(pos1)
         if packet_id == 0:
             r.incr("curr_key")
-            curr_key = r.get(curr_key)
+            curr_key = r.get("curr_key")
             r.set("curr_id", packet_id)
             r.hmset(curr_key, {packet_id: raw_acc})
         else:
