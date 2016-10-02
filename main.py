@@ -6,7 +6,7 @@ import numpy as np
 # import matplotlib.pyplot as plt
 
 def raw_acc_to_acc(raw_acc):
-    acc = np.frombuffer(raw_acc, numpy.uint16)
+    acc = np.frombuffer(raw_acc, np.uint16)
     return acc.reshape((len(acc)//3, 3))
 
 def acc_to_pos(acc, t):
