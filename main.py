@@ -120,7 +120,7 @@ class MainHandler(tornado.web.RequestHandler):
     def post(self):
         redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
         r = redis.from_url(redis_url)
-        packet_id = self.request.headers['PacketID']
+        packet_id = self.request.headers['Packetid']
         raw_acc = self.request.body
         #acc = raw_acc_to_acc(raw_acc)
         #pos1 = acc_to_pos(acc) # time!!?!?!?!?
