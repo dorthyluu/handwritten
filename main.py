@@ -96,15 +96,20 @@ class MainHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "text/plain")
         raw_acc = self.get_body_argument("accelerations")
         acc = raw_acc_to_acc(raw_acc)
-        pos = acc_to_pos(acc, 1) # time!!?!?!?!?
-        pos = project_pos(pos)
-        self.write("Positions are " + str(pos))
+        pos1 = acc_to_pos(acc, 1) # time!!?!?!?!?
+        pos2 = project_pos(pos1)
+        self.write("Before adjusting: " + str(pos1) + "After adjusting: " + str(pos2))
         # visualize positions
+
+class ViewHandler(tornado.web.RequestHandler):
+    def get(self):
+        items = ["item1", "item2???", "item3"]
 
 def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
-        (r"/myform", MainHandler)
+        (r"/myform", MainHandler),
+        (r"/view", ViewHandler)
     ])
 
 if __name__ == "__main__":
