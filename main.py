@@ -83,7 +83,7 @@ def project_pos(pos):
         # plt.scatter(bv1_c, bv2_c)
         new_points.append([bv1_c, bv2_c])
     # plt.show()
-    return np.array(new_points)
+    return new_points
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -97,6 +97,7 @@ class MainHandler(tornado.web.RequestHandler):
         raw_acc = self.get_body_argument("accelerations")
         acc = raw_acc_to_acc(raw_acc)
         pos = acc_to_pos(acc, 1) # time!!?!?!?!?
+        pos = project_pos(pos)
         self.write("Positions are " + str(pos))
         # visualize positions
 
