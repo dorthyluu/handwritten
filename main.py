@@ -6,10 +6,8 @@ import numpy as np
 # import matplotlib.pyplot as plt
 
 def raw_acc_to_acc(raw_acc):
-    raw_acc = raw_acc.split("\\x").pop(0)
-    acc = map(lambda s: int(s, 16), raw_acc)
-    acc = np.array(acc).reshape((len(acc)//3, 3))
-    return acc
+    acc = np.frombuffer(raw_acc, numpy.uint16)
+    return acc.reshape((len(acc)//3, 3))
 
 def acc_to_pos(acc, t):
     # t is time interval in what units ???
