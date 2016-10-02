@@ -82,7 +82,14 @@ def project_pos(pos):
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write("Hello, world")
+        self.write('<html><body><form action="/myform" method="POST">'
+                   '<input type="text" name="accelerations">'
+                   '<input type="submit" value="Submit">'
+                   '</form></body></html>')
+
+    def post(self):
+        self.set_header("Content-Type", "text/plain")
+        self.write("You wrote " + self.get_body_argument("accelerations"))
 
 def make_app():
     return tornado.web.Application([
