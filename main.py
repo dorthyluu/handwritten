@@ -126,15 +126,15 @@ class MainHandler(tornado.web.RequestHandler):
         #pos1 = acc_to_pos(acc) # time!!?!?!?!?
         #pos2 = project_pos(pos1)
         if packet_id == 0:
-            curr_key = time.time()
-            r.set("curr_key", curr_key)
+            r.incr("curr_key")
+            curr_key = r.get(curr_key)
             r.set("curr_id", packet_id)
             r.hmset(curr_key, {packet_id: raw_acc})
         else:
             curr_key = r.get("curr_key")
             points = r.get(curr_key)
             if packet_id == -1:
-                points[r.get("curr_id") + 1] = raw_acc
+                points[int(r.get("curr_id")) + 1] = raw_acc
             else:
                 r.set("curr_id", packet_id)
                 points[packet_id] = raw_acc
