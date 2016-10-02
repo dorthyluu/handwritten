@@ -1,26 +1,30 @@
+from __future__ import division
 import tornado.ioloop
 import tornado.web
 import os
 import numpy as np
 # import matplotlib.pyplot as plt
 
+def raw_acc_to_acc(raw_acc):
+    acc = map(lambda s: int(s), raw_acc.split(","))
+    acc = np.array(acc).reshape((len(acc)/3, 3))
+    return acc
+
 def acc_to_pos(acc, t):
     # t is time interval in what units ???
     # acc is a list of 3-vectors in distance / unit time,
     # each vector is an acceleration sample after t seconds
 
-    #compute velocity using Riemann sums:
-    vel = []
-    so_far = (0.0, 0.0, 0.0)
-    for a in acc:
-        so_far = tuple(so_far[i] + a[i] for i in range(3))
-        vel.append(so_far)
-
+    # compute velocity using Riemann sums:
     pos = []
-    so_far = (0.0, 0.0, 0.0)
-    for v in vel:
-        so_far = tuple(so_far[i] + v[i] for i in range(3))
-        pos.append(so_far)
+    vel_so_far = [0.0, 0.0, 0.0]
+    pos_so_far = (0.0, 0.0, 0.0)
+    for a in acc:
+        vel_so_far[0] += a[0]
+        vel_so_far[1] += a[1]
+        vel_so_far[2] += a[2]
+        pos_so_far = tuple(pos_so_far[i] + vel_so_far[i] for i in range(3))
+        pos.append(pos_so_far)
 
     return pos
 
@@ -65,6 +69,7 @@ def orthonormal_basis(x, anchor):
     return bv1, bv2
 
 def project_pos(pos):
+    pos = np.array(pos)
     x = find_plane(pos)
     normal = get_normal(x)
     # anchor is the point in our plane that the normal vector passes through
@@ -89,7 +94,11 @@ class MainHandler(tornado.web.RequestHandler):
 
     def post(self):
         self.set_header("Content-Type", "text/plain")
-        self.write("You wrote " + self.get_body_argument("accelerations"))
+        raw_acc = self.get_body_argument("accelerations")
+        acc = raw_acc_to_acc(raw_acc)
+        pos = acc_to_pos(acc)
+        self.write("Positions are " + str(pos))
+        # visualize positions
 
 def make_app():
     return tornado.web.Application([
